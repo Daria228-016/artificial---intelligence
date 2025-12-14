@@ -1,0 +1,119 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <ctime>
+#include <algorithm>
+#include <cstdlib>
+using namespace std;
+class Hangman
+{
+private:
+    string word; // Загаданное слово
+    string guessedWord; // Угаданное слово с подчеркиваниями
+    vector<char> guessedLetters; // Угаданные буквы
+    int attempts; // Количество попыток
+    time_t startTime; // Время начала игры
+
+    void loadWords() 
+    {
+        ofstream MyFile("filename.txt");
+        ifstream file("words.txt");
+        if (!file.is_open())
+        {
+            cerr << "Не удалось открыть файл со словами." << endl;
+            exit(1);
+        }
+
+        vector<string> words;
+        string line;
+        while (getline(file, line))
+        {
+            words.push_back(line);
+        }
+        file.close();
+
+        // Выбор случайного слова из списка
+        srand(time(0));
+        word = words[rand() % words.size()];
+        guessedWord = string(word.length(), '_');
+    }
+
+public:
+    Hangman() : attempts(6)
+    {
+        loadWords();
+        startTime = time(0);
+    }
+
+    void play() 
+    {
+        while (attempts > 0 && guessedWord != word) 
+        {
+            cout << "Слово: " << guessedWord << endl;
+            cout << "Попытки оставшиеся: " << attempts << endl;
+            cout << "Угаданные буквы: ";
+            for (char letter : guessedLetters) 
+            {
+                cout << letter << ' ';
+            }
+            cout << endl;
+
+            char guess;
+            cout << "Введите букву: ";
+            cin >> guess;
+
+            // Проверка, была ли буква уже угадана
+            if (find(guessedLetters.begin(), guessedLetters.end(), guess) != guessedLetters.end())
+            {
+                cout << "Вы уже угадали эту букву!" << endl;
+                continue;
+            }
+
+            guessedLetters.push_back(guess);
+            if (word.find(guess) != string::npos) 
+            {
+                for (size_t i = 0; i < word.length(); ++i) 
+                {
+                    if (word[i] == guess) 
+                    {
+                        guessedWord[i] = guess;
+                    }
+                }
+            }
+            else
+            {
+                --attempts;
+                cout << "Неправильно!" << endl;
+            }
+        }
+
+        endGame();
+    }
+
+    void endGame()
+    {
+        time_t endTime = time(0);
+        double elapsedTime = difftime(endTime, startTime);
+
+        cout << "Игра окончена!" << endl;
+        cout << "Искомое слово: " << word << endl;
+        cout << "Количество попыток: " << (6 - attempts) << endl;
+        cout << "Время игры: " << elapsedTime << " секунд" << endl;
+
+        cout << "Угаданные буквы: ";
+        for (char letter : guessedLetters) 
+        {
+            cout << letter << ' ';
+        }
+        cout << endl;
+    }
+};
+
+int main() 
+{
+    setlocale(LC_ALL, "RUS");
+    Hangman game;
+    game.play();
+    return 0;
+}
